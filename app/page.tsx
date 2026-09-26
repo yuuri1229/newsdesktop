@@ -60,12 +60,12 @@ export default function Home() {
           <WeatherPanel place={place} />
         </div>
         <div className="col col-mid">
-          <NewsPanel title="国内ニュース" sub="NHK / Google News" feed={domestic} className="grow-3" />
-          <NewsPanel title={`${areaName} 周辺ニュース`} sub={`Google News・${place.pref || "周辺"}（24時間以内）`} feed={local} className="grow-2" />
+          <NewsPanel title="国内ニュース" sub="Yahoo!ニュース" feed={domestic} className="grow-3" />
+          <NewsPanel title={`${areaName} 周辺ニュース`} sub={`Yahoo!ニュース / Google News・${place.pref || "周辺"}`} feed={local} className="grow-2" />
         </div>
         <div className="col col-right">
           <MarketPanel />
-          <NewsPanel title="国際ニュース" sub="NHK / Google News" feed={world} className="grow-3" />
+          <NewsPanel title="国際ニュース" sub="Yahoo!ニュース" feed={world} className="grow-3" />
         </div>
       </main>
 

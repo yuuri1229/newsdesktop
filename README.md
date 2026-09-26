@@ -10,10 +10,10 @@ PC の 1 画面に収まる、パーソナル情報のリアルタイムダッ�
 |---|---|---|---|
 | 左上 | 日本標準時（和暦・世界時計付き） | 端末時計を `Asia/Tokyo` で表示 | 0.25 秒 |
 | 左下 | 現在地の現在の天気・時間予報・週間予報 | [Open-Meteo](https://open-meteo.com/)（位置情報 → [BigDataCloud](https://www.bigdatacloud.com/) で地名化） | 5 分 |
-| 中央上 | 国内ニュース | NHK RSS（主要・社会・政治）+ Google News 国内 | 取得 5 分 / 画面 2 分 |
-| 中央下 | 現在地周辺のニュース | Google News 検索（都道府県名 + 市区町村名、24 時間以内） | 取得 20 分 / 画面 5 分 |
+| 中央上 | 国内ニュース | Yahoo!ニュース RSS（国内・経済トピックス、国内カテゴリ） | 取得 5 分 / 画面 2 分 |
+| 中央下 | 現在地周辺のニュース | Yahoo!ニュース「地域」を都道府県名で抽出 + Google News 検索（都道府県名・市区町村名） | 取得 20 分 / 画面 5 分 |
 | 右上 | 日経平均株価 / TOPIX（当日チャート・東証の立会状況） | Yahoo Finance（失敗時 stooq） | 取得 5 分 / 画面 1 分 |
-| 右下 | 国際ニュース | NHK RSS（国際）+ Google News 国際 | 取得 5 分 / 画面 2 分 |
+| 右下 | 国際ニュース | Yahoo!ニュース RSS（国際トピックス、国際カテゴリ） | 取得 5 分 / 画面 2 分 |
 | 下部 | 速報テロップ | 国内・国際の直近 1 時間のニュース | ニュースと同時 |
 
 - 1 時間以内の記事には `NEW` バッジが付きます。
@@ -43,7 +43,7 @@ npm run build   # 静的ファイルを out/ に出力
 ### ニュース・株価データの取得方法
 
 GitHub Pages は静的ホスティングのため、ブラウザから直接取得できない（CORS 非対応の）
-NHK / Google News の RSS と株価は、`.github/workflows/collect.yml` が **5 分ごと**に
+Yahoo!ニュース / Google News の RSS と株価は、`.github/workflows/collect.yml` が **5 分ごと**に
 GitHub Actions 上で取得し、`data` ブランチに JSON として保存します（`scripts/collect.mjs`）。
 ダッシュボードはその JSON を `raw.githubusercontent.com` から読み込みます。
 

@@ -63,18 +63,18 @@ export async function fetchFeeds(sources: FeedSource[], limit = 40): Promise<New
 }
 
 const gnews = (path: string) => `https://news.google.com/rss/${path}hl=ja&gl=JP&ceid=JP:ja`;
-const nhk = (cat: string) => `https://www3.nhk.or.jp/rss/news/${cat}.xml`;
+const yahoo = (path: string) => `https://news.yahoo.co.jp/rss/${path}.xml`;
+const YAHOO = "Yahoo!ニュース";
 
 export const FEEDS = {
   domestic: [
-    { name: "NHK", url: nhk("cat0") },
-    { name: "NHK", url: nhk("cat1") },
-    { name: "NHK", url: nhk("cat4") },
-    { name: "Google News", url: gnews("headlines/section/topic/NATION?") },
+    { name: YAHOO, url: yahoo("topics/domestic") },
+    { name: YAHOO, url: yahoo("categories/domestic") },
+    { name: YAHOO, url: yahoo("topics/business") },
   ],
   world: [
-    { name: "NHK", url: nhk("cat6") },
-    { name: "Google News", url: gnews("headlines/section/topic/WORLD?") },
+    { name: YAHOO, url: yahoo("topics/world") },
+    { name: YAHOO, url: yahoo("categories/world") },
   ],
   local: (pref: string, city: string): FeedSource[] => {
     const q = (s: string) => gnews(`search?q=${encodeURIComponent(`${s} when:1d`)}&`);

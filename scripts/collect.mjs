@@ -65,7 +65,8 @@ async function feeds(sources, limit = 40) {
 }
 
 const gnews = (p) => `https://news.google.com/rss/${p}hl=ja&gl=JP&ceid=JP:ja`;
-const nhk = (c) => `https://www3.nhk.or.jp/rss/news/${c}.xml`;
+const yahoo_ = (p) => `https://news.yahoo.co.jp/rss/${p}.xml`;
+const YAHOO = "Yahoo!ニュース";
 const gsearch = (q) => gnews(`search?q=${encodeURIComponent(`${q} when:1d`)}&`);
 
 // ---- 株価 ----
@@ -200,16 +201,15 @@ await mkdir(OUT, { recursive: true });
 await Promise.all([
   save("news-domestic.json", () =>
     feeds([
-      { name: "NHK", url: nhk("cat0") },
-      { name: "NHK", url: nhk("cat1") },
-      { name: "NHK", url: nhk("cat4") },
-      { name: "Google News", url: gnews("headlines/section/topic/NATION?") },
+      { name: YAHOO, url: yahoo_("topics/domestic") },
+      { name: YAHOO, url: yahoo_("categories/domestic") },
+      { name: YAHOO, url: yahoo_("topics/business") },
     ]),
   ),
   save("news-world.json", () =>
     feeds([
-      { name: "NHK", url: nhk("cat6") },
-      { name: "Google News", url: gnews("headlines/section/topic/WORLD?") },
+      { name: YAHOO, url: yahoo_("topics/world") },
+      { name: YAHOO, url: yahoo_("categories/world") },
     ]),
   ),
   save("market.json", async () => {
@@ -231,11 +231,49 @@ await Promise.all([
   }),
 ]);
 
-// 都道府県別の地域ニュース (Google News への負荷を抑えるため 20 分ごと・4 並列)
+// 都道府県別の地域ニュース
+// Yahoo!ニュース「地域」カテゴリ (全国分) を都道府県名で振り分け + Google News 検索 (20 分ごと・4 並列)
+let yahooLocal = [];
+try {
+  yahooLocal = await feeds(
+    [
+      { name: YAHOO, url: yahoo_("categories/local") },
+      { name: YAHOO, url: yahoo_("topics/local") },
+    ],
+    200,
+  );
+} catch (e) {
+  console.warn("yahoo local failed:", e.message);
+}
+const prefPattern = (name) => {
+  const short = name === "北海道" ? name : name.replace(/[都府県]$/, "");
+  return new RegExp(`(?<!東)${short}`);
+};
+const yahooFor = (p) => yahooLocal.filter((it) => prefPattern(p.name).test(it.title));
+
 const targets = [];
 for (const p of PREFS) if (await isStale(`local/${p.code}.json`)) targets.push(p);
 for (let i = 0; i < targets.length; i += 4) {
   await Promise.all(
-    targets.slice(i, i + 4).map((p) => save(`local/${p.code}.json`, () => feeds([{ name: "Google News", url: gsearch(p.name) }], 30))),
+    targets.slice(i, i + 4).map((p) =>
+      save(`local/${p.code}.json`, async () => {
+        let google = [];
+        try {
+          google = await feeds([{ name: "Google News", url: gsearch(p.name) }], 30);
+        } catch (e) {
+          if (!yahooFor(p).length) throw e;
+        }
+        const seen = new Set();
+        return [...yahooFor(p), ...google]
+          .filter((it) => {
+            const k = it.title.replace(/\s+/g, "");
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+          })
+          .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
+          .slice(0, 40);
+      }),
+    ),
   );
 }
