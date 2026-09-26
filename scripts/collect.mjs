@@ -37,12 +37,15 @@ function parseRss(xml, fallbackSource) {
     let title = tag(item, "title");
     const source = tag(item, "source");
     if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3));
+    // Yahoo!ニュースはタイトル末尾に "(配信元)" が付く
+    const media = !source && title.match(/\(([^()]+)\)$/);
+    if (media) title = title.slice(0, media.index).trim();
     const d = new Date(tag(item, "pubDate"));
     return {
       title,
       link: tag(item, "link"),
       date: isNaN(d.getTime()) ? null : d.toISOString(),
-      source: source || fallbackSource,
+      source: source || (media ? media[1] : fallbackSource),
     };
   });
 }

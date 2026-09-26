@@ -34,6 +34,11 @@ export function parseFeed(xml: string, fallbackSource: string): NewsItem[] {
     const link = linkEl?.getAttribute("href") || linkEl?.textContent?.trim() || "";
     const raw = text(n, "pubDate") || text(n, "published") || text(n, "updated") || text(n, "dc:date");
     const d = raw ? new Date(raw) : null;
+    const media = !text(n, "source") && title.match(/\(([^()]+)\)$/);
+    if (media) {
+      title = title.slice(0, media.index).trim();
+      source = media[1];
+    }
     if (!source) source = fallbackSource;
     return { title, link, date: d && !isNaN(d.getTime()) ? d : null, source };
   });
