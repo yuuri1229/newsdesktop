@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, claude/personal-data-realtime-app-cvzdof]
-    paths: [scripts/collect.mjs, .github/workflows/collect.yml]
+    paths: [scripts/collect.mjs, lib/streams.json, .github/workflows/collect.yml]
 
 permissions:
   contents: write

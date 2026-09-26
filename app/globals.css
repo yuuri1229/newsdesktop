@@ -214,6 +214,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .live-btn.on { color: #d4a017; }
 .live-video { position: relative; flex: 1; min-height: 0; }
 .live-player, .live-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.live-lag.off { color: var(--muted); }
+.live-alt { flex: none; font-size: 10px; font-weight: 700; color: #d4a017; border: 1px solid #d4a017; border-radius: 3px; padding: 0 4px; cursor: help; }
+.live-offline { position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; text-align: center; color: #bbb; font-size: 12px; background: repeating-linear-gradient(135deg, #0c0f14 0 12px, #11151c 12px 24px); }
+.live-offline b { font-size: 18px; color: #e5e7eb; letter-spacing: 0.1em; }
+.live-offline p { margin: 0; }
 .live-error { position: absolute; inset: 0; display: grid; place-content: center; gap: 6px; text-align: center; color: #ccc; font-size: 12px; background: #000; }
 .live-error p { margin: 0; }
 .live-error a { color: var(--accent); }
