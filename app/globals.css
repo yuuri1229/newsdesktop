@@ -1,0 +1,236 @@
+:root {
+  --bg: #f3f4f6;
+  --panel: #ffffff;
+  --panel-2: #f7f8fa;
+  --line: #e3e6eb;
+  --ink: #15191f;
+  --ink-2: #4a5260;
+  --muted: #7b8494;
+  --accent: #2563eb;
+  --up: #0f8a4f;
+  --down: #d1343f;
+  --new: #d1343f;
+  --spark: #2563eb;
+  --sat: #2563eb;
+  --sun: #d1343f;
+  --ticker-bg: #15191f;
+  --ticker-ink: #f3f4f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0e13;
+    --panel: #141920;
+    --panel-2: #1a2029;
+    --line: #262d38;
+    --ink: #e8ebf0;
+    --ink-2: #b3bbc7;
+    --muted: #7a8494;
+    --accent: #5b9dff;
+    --up: #34c77b;
+    --down: #ff6470;
+    --new: #ff5a66;
+    --spark: #5b9dff;
+    --sat: #6aa8ff;
+    --sun: #ff7a84;
+    --ticker-bg: #1b0f12;
+    --ticker-ink: #f3f4f6;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "palt";
+}
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); }
+button { font: inherit; color: inherit; cursor: pointer; }
+.muted { color: var(--muted); font-style: normal; }
+
+/* ---- 全体: PC 画面の高さに収める ---- */
+.app {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.topbar h1 { font-size: 16px; margin: 0; letter-spacing: 0.04em; }
+.logo { color: var(--accent); }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--down); letter-spacing: 0.1em; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--down); animation: pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+.topbar-loc { color: var(--ink-2); font-size: 13px; margin-left: auto; }
+.fs-btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) 1.25fr 1.15fr;
+  gap: 10px;
+  padding: 10px;
+  min-height: 0;
+}
+.col { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.col > * { min-height: 0; }
+.col-left .weather { flex: 1; }
+.grow-3 { flex: 3; }
+.grow-2 { flex: 2; }
+
+/* ---- パネル ---- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.panel-head h2 { font-size: 14px; margin: 0; white-space: nowrap; }
+.panel-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel-status { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.panel-status .err { color: var(--down); }
+.refresh { background: none; border: 0; padding: 0 2px; font-size: 14px; color: var(--muted); line-height: 1; }
+.refresh:hover { color: var(--accent); }
+.refresh.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 12px 10px; scrollbar-width: thin; }
+.empty { color: var(--muted); font-size: 13px; padding: 16px 0; text-align: center; }
+.sub-h { font-size: 11px; color: var(--muted); font-weight: 600; margin: 10px 0 4px; letter-spacing: 0.05em; }
+
+/* ---- 時計 ---- */
+.clock { padding: 12px 16px 12px; flex: none; }
+.clock-label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; }
+.clock-time {
+  font-size: clamp(44px, 5.2vw, 76px);
+  font-weight: 700;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.clock-sec { font-size: 0.5em; color: var(--ink-2); font-weight: 600; }
+.clock-date { font-size: 15px; color: var(--ink-2); display: flex; gap: 10px; align-items: baseline; }
+.clock-era { font-size: 12px; color: var(--muted); }
+.world { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.world div { display: flex; flex-direction: column; font-size: 11px; color: var(--muted); }
+.world b { font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---- 天気 ---- */
+.wx-now { display: grid; grid-template-columns: auto auto 1fr; gap: 12px; align-items: center; padding: 4px 0 4px; }
+.wx-icon { font-size: 52px; line-height: 1; }
+.wx-temp { font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.wx-temp small { font-size: 16px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
+.wx-label { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+.wx-stats { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 12px; justify-self: end; }
+.wx-stats div { display: flex; gap: 6px; }
+.wx-stats dt { color: var(--muted); white-space: nowrap; }
+.wx-stats dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wx-hourly { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(40px, 1fr); overflow-x: auto; scrollbar-width: none; gap: 2px; text-align: center; font-size: 12px; }
+.wx-hourly div { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0; background: var(--panel-2); border-radius: 6px; }
+.wx-sm-icon { font-size: 18px; line-height: 1.2; }
+.pop { color: var(--accent); font-size: 11px; font-variant-numeric: tabular-nums; }
+.weather .panel-body { display: flex; flex-direction: column; container-type: inline-size; }
+@container (max-width: 440px) {
+  .wx-now { grid-template-columns: auto 1fr; }
+  .wx-stats { grid-column: 1 / -1; justify-self: stretch; grid-template-columns: repeat(3, auto); }
+  .wx-icon { font-size: 44px; }
+}
+.wx-daily { display: flex; flex-direction: column; flex: 1; justify-content: space-evenly; min-height: 0; }
+.wx-daily > div { display: grid; grid-template-columns: 4.5em 2em 2.4em 1fr 2.4em 3em; gap: 6px; align-items: center; padding: 3px 0; border-bottom: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
+.wx-daily > div:last-child { border-bottom: 0; }
+.wx-daily .hi { color: var(--down); text-align: right; }
+.wx-daily .lo { color: var(--accent); text-align: right; }
+.wx-daily .pop { text-align: right; }
+.range { position: relative; height: 5px; border-radius: 3px; background: var(--panel-2); }
+.range i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--down)); }
+.day.sat { color: var(--sat); }
+.day.sun { color: var(--sun); }
+
+/* ---- ニュース ---- */
+.news-list { list-style: none; margin: 0; padding: 0; }
+.news-list li {
+  display: grid;
+  grid-template-columns: 4.2em 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+.news-list li:last-child { border-bottom: 0; }
+.news-list time { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.news-list a { font-size: 13.5px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.news-list .src { font-size: 10.5px; color: var(--muted); white-space: nowrap; max-width: 8em; overflow: hidden; text-overflow: ellipsis; }
+.badge-new { display: inline-block; font-size: 9.5px; font-weight: 700; color: #fff; background: var(--new); border-radius: 3px; padding: 0 4px; margin-right: 6px; vertical-align: 1px; }
+
+/* ---- マーケット ---- */
+.market { flex: none; }
+.session { font-size: 11px; color: var(--muted); }
+.session.open { color: var(--up); }
+.quotes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quote { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.quote-head { display: flex; justify-content: space-between; align-items: baseline; }
+.quote-name { font-weight: 700; font-size: 13px; }
+.quote-time { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.quote-main { display: flex; flex-direction: column; }
+.quote-price { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.quote-chg { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.quote-chg.up { color: var(--up); }
+.quote-chg.down { color: var(--down); }
+.quote-foot { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.spark { position: relative; height: 64px; margin-top: 4px; }
+.spark svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.spark-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.spark-line.up { stroke: var(--up); }
+.spark-line.down { stroke: var(--down); }
+.spark-area { stroke: none; opacity: 0.1; }
+.spark-area.up { fill: var(--up); }
+.spark-area.down { fill: var(--down); }
+.spark-base { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.spark-cross { stroke: var(--ink-2); stroke-width: 1; }
+.spark-tip { position: absolute; top: -6px; transform: translate(-50%, -100%); background: var(--ink); color: var(--panel); font-size: 11px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
+.empty-spark { display: grid; place-items: center; font-size: 11px; color: var(--muted); background: var(--panel-2); border-radius: 6px; }
+
+/* ---- 速報テロップ ---- */
+.ticker { display: flex; align-items: stretch; height: 36px; background: var(--ticker-bg); color: var(--ticker-ink); overflow: hidden; }
+.ticker-tag { flex: none; display: grid; place-items: center; padding: 0 14px; background: var(--new); color: #fff; font-weight: 800; letter-spacing: 0.1em; font-size: 13px; }
+.ticker-track { flex: 1; overflow: hidden; display: flex; align-items: center; }
+.ticker-move { display: flex; white-space: nowrap; animation: ticker linear infinite; }
+.ticker-move:hover { animation-play-state: paused; }
+.ticker-move a { margin-right: 48px; font-size: 14px; }
+.ticker-move time { color: #ffb3b8; margin-right: 8px; font-variant-numeric: tabular-nums; font-size: 12px; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ticker-move { animation: none; } }
+
+/* ---- 狭い画面 (タブレット/スマホ) はスクロール許可 ---- */
+@media (max-width: 1100px) {
+  .app { height: auto; min-height: 100vh; overflow: visible; }
+  .grid { grid-template-columns: 1fr; padding: 8px 16px; }
+  .col > .panel { max-height: none; }
+  .news .panel-body { max-height: 420px; }
+  .ticker { position: sticky; bottom: 0; }
+}
+@media (max-width: 520px) {
+  .quotes { grid-template-columns: 1fr; }
+  .topbar-loc { display: none; }
+}
