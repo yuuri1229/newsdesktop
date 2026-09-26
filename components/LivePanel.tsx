@@ -23,6 +23,8 @@ const ERRORS: Record<number, string> = {
   100: "配信が見つかりません（終了または非公開）",
   101: "この配信は埋め込み再生が許可されていません",
   150: "この配信は埋め込み再生が許可されていません",
+  152: "この配信は埋め込み再生が許可されていません",
+  153: "プレーヤーの設定エラー（参照元情報が送信されていない可能性）",
 };
 
 function LiveTile({ stream, audible, onToggleAudio }: { stream: Stream; audible: boolean; onToggleAudio: () => void }) {
@@ -68,7 +70,7 @@ function LiveTile({ stream, audible, onToggleAudio }: { stream: Stream; audible:
               setReady(true);
             },
             onStateChange: (e) => setState(e.data),
-            onError: (e) => setError(ERRORS[e.data] ?? `再生エラー (${e.data})`),
+            onError: (e) => setError(`${ERRORS[e.data] ?? "再生エラー"}（エラーコード ${e.data}）`),
           },
         });
       })
