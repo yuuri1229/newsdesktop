@@ -143,29 +143,69 @@ function parseWatch(html) {
   };
 }
 
+// 前回結果 (チャンネル ID のキャッシュ)
+let previousLive = [];
+try {
+  previousLive = JSON.parse(await readFile(path.join(OUT, "live-streams.json"), "utf8")).data ?? [];
+} catch {}
+
+/** oEmbed (ボット確認の対象外) で投稿者を調べ、チャンネルページからチャンネル ID を得る */
+async function resolveChannel(s) {
+  const prev = previousLive.find((p) => p.id === s.id);
+  const out = { channelId: s.channelId ?? prev?.channelId ?? null, channel: prev?.channel ?? null, embeddable: null, exists: null };
+  const res = await fetch(
+    `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${s.id}`)}`,
+    { headers: YT_HEADERS, signal: AbortSignal.timeout(15000) },
+  );
+  if (res.ok) {
+    const o = await res.json();
+    out.exists = true;
+    out.embeddable = true;
+    out.channel = o.author_name ?? out.channel;
+    if (!out.channelId && o.author_url) {
+      const html = await get(o.author_url, 15000, YT_HEADERS);
+      out.channelId =
+        html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/)?.[1] ??
+        html.match(/"externalId":"(UC[\w-]{22})"/)?.[1] ??
+        html.match(/"channelId":"(UC[\w-]{22})"/)?.[1] ??
+        null;
+    }
+  } else if (res.status === 401 || res.status === 403) {
+    out.exists = true;
+    out.embeddable = false;
+  } else if (res.status === 404 || res.status === 400) {
+    out.exists = false;
+  }
+  return out;
+}
+
 async function checkStream(s) {
   const base = { id: s.id, title: s.title, group: s.group, checkedAt: new Date().toISOString() };
-  const w = parseWatch(await get(`https://www.youtube.com/watch?v=${s.id}`, 15000, YT_HEADERS));
-  // ボット確認などでページが取れていない場合は判定不能
-  if (!w.status || w.status === "LOGIN_REQUIRED") return { ...base, status: "unknown", activeId: s.id, reason: w.status ?? "parse" };
-  if (w.status === "OK" && w.isLiveNow) {
-    return { ...base, status: "live", activeId: s.id, channelId: w.channelId, channel: w.channel, activeTitle: w.title };
+  let ch = { channelId: s.channelId ?? null, channel: null, embeddable: null, exists: null };
+  try {
+    ch = await resolveChannel(s);
+  } catch (e) {
+    console.warn(`live: ${s.title} channel lookup failed:`, e.message);
   }
-  if (!w.channelId) return { ...base, status: "offline", activeId: null, channel: w.channel };
+  const info = { ...base, channelId: ch.channelId, channel: ch.channel, embeddable: ch.embeddable, exists: ch.exists };
 
-  // 同じチャンネルで配信中のライブ (/channel/<id>/live は配信中なら視聴ページを返す)
-  const live = parseWatch(await get(`https://www.youtube.com/channel/${w.channelId}/live`, 15000, YT_HEADERS));
-  if (live.videoId && live.isLiveNow && live.status === "OK") {
-    return {
-      ...base,
-      status: live.videoId === s.id ? "live" : "replaced",
-      activeId: live.videoId,
-      channelId: w.channelId,
-      channel: w.channel ?? live.channel,
-      activeTitle: live.title,
-    };
+  // 視聴ページで配信状態を確認 (データセンターからはボット確認で弾かれることが多い → unknown)
+  let w;
+  try {
+    w = parseWatch(await get(`https://www.youtube.com/watch?v=${s.id}`, 15000, YT_HEADERS));
+  } catch {
+    return { ...info, status: "unknown", activeId: s.id, reason: "fetch" };
   }
-  return { ...base, status: "offline", activeId: null, channelId: w.channelId, channel: w.channel };
+  if (!w.status || w.status === "LOGIN_REQUIRED") return { ...info, status: "unknown", activeId: s.id, reason: w.status ?? "parse" };
+  const channelId = info.channelId ?? w.channelId;
+  if (w.status === "OK" && w.isLiveNow) return { ...info, channelId, status: "live", activeId: s.id, activeTitle: w.title };
+  if (!channelId) return { ...info, status: "offline", activeId: null };
+  const live = parseWatch(await get(`https://www.youtube.com/channel/${channelId}/live`, 15000, YT_HEADERS));
+  if (live.videoId && live.isLiveNow && live.status === "OK") {
+    return { ...info, channelId, status: live.videoId === s.id ? "live" : "replaced", activeId: live.videoId, activeTitle: live.title };
+  }
+  if (!live.status || live.status === "LOGIN_REQUIRED") return { ...info, channelId, status: "unknown", activeId: s.id, reason: "channel-live" };
+  return { ...info, channelId, status: "offline", activeId: null };
 }
 
 await save("live-streams.json", async () => {
@@ -173,7 +213,7 @@ await save("live-streams.json", async () => {
   for (const s of STREAMS) {
     try {
       const r = await checkStream(s);
-      console.log(`live: ${s.title} -> ${r.status} ${r.activeId ?? ""} ${r.reason ?? ""}`);
+      console.log(`live: ${s.title} -> ${r.status} ${r.activeId ?? ""} channel=${r.channelId ?? "?"} (${r.channel ?? ""}) embeddable=${r.embeddable} ${r.reason ?? ""}`);
       results.push(r);
     } catch (e) {
       console.warn(`live: ${s.title} failed:`, e.message);

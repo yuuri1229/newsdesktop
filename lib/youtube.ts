@@ -12,6 +12,8 @@ export type YTPlayer = {
   getCurrentTime(): number;
   getDuration(): number;
   getPlayerState(): number;
+  /** 非公開 API だが広く使われている。ライブ配信なら isLive が true */
+  getVideoData(): { video_id?: string; title?: string; author?: string; isLive?: boolean };
   destroy(): void;
 };
 
@@ -19,7 +21,7 @@ type YTNamespace = {
   Player: new (
     el: HTMLElement,
     opts: {
-      videoId: string;
+      videoId?: string;
       host?: string;
       playerVars?: Record<string, string | number>;
       events?: {
@@ -31,7 +33,7 @@ type YTNamespace = {
   ) => YTPlayer;
 };
 
-export const YT_STATE = { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 } as const;
+export const YT_STATE = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 } as const;
 
 let loading: Promise<YTNamespace> | null = null;
 
