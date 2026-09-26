@@ -111,11 +111,19 @@ try {
   previousMarket = JSON.parse(await readFile(path.join(OUT, "market.json"), "utf8")).data ?? [];
 } catch {}
 const jstDate = (t) => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
+const inSession = (t) => {
+  const d = new Date(t + 9 * 3600e3);
+  const m = d.getUTCHours() * 60 + d.getUTCMinutes();
+  return d.getUTCDay() % 6 !== 0 && m >= 9 * 60 && m <= 15 * 60 + 35;
+};
+/** 取引時間中は当日の点に追記、時間外は直近の立会の点と時刻をそのまま使う */
 function withHistory(name, price) {
   const now = Date.now();
-  const prev = previousMarket.find((q) => q.name === name)?.points ?? [];
-  const today = prev.filter((p) => jstDate(p.t) === jstDate(now));
-  return [...today, { t: now, v: price }].slice(-120);
+  const prev = previousMarket.find((q) => q.name === name);
+  const prevPoints = prev?.points ?? [];
+  if (!inSession(now) && prevPoints.length) return { points: prevPoints, time: prev.time ?? null };
+  const today = prevPoints.filter((p) => jstDate(p.t) === jstDate(now));
+  return { points: [...today, { t: now, v: price }].slice(-120), time: new Date(now).toISOString() };
 }
 
 async function googleFinance(ticker, name) {
@@ -128,8 +136,8 @@ async function googleFinance(ticker, name) {
     name,
     price,
     prevClose: isNaN(prevClose) ? null : prevClose,
-    time: ts ? new Date(ts * 1000).toISOString() : new Date().toISOString(),
-    points: withHistory(name, price),
+    ...withHistory(name, price),
+    ...(ts ? { time: new Date(ts * 1000).toISOString() } : {}),
     source: "Google Finance",
   };
 }
@@ -144,8 +152,7 @@ async function yahooJapan(code, name) {
     name,
     price,
     prevClose: isNaN(change) ? null : Math.round((price - change) * 100) / 100,
-    time: new Date().toISOString(),
-    points: withHistory(name, price),
+    ...withHistory(name, price),
     source: "Yahoo!ファイナンス",
   };
 }
