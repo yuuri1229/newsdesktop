@@ -1,6 +1,6 @@
 name: Collect data
 
-# ブラウザから直接取得できない (CORS 非対応の) ニュース RSS と株価を定期取得し、
+# ブラウザから直接取得できない (CORS 非対応の) ニュース RSS を定期取得し、
 # `data` ブランチに JSON として保存する。ダッシュボードは raw.githubusercontent.com から読む。
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, claude/personal-data-realtime-app-cvzdof]
-    paths: [scripts/collect.mjs, lib/prefectures.json, .github/workflows/collect.yml]
+    paths: [scripts/collect.mjs, .github/workflows/collect.yml]
 
 permissions:
   contents: write

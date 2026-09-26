@@ -1,29 +1,24 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertControl, AlertPopups, notify } from "@/components/BreakingAlerts";
 import { unlockAudio, useAlertSettings, useBreakingDetector, type Alert } from "@/lib/alerts";
 import { Clock } from "@/components/Clock";
 import { Icon } from "@/components/Icon";
-import { MarketPanel } from "@/components/MarketPanel";
+import { LivePanel } from "@/components/LivePanel";
 import { NewsPanel } from "@/components/NewsPanel";
 import { Ticker } from "@/components/Ticker";
 import { WeatherPanel } from "@/components/WeatherPanel";
 import { usePlace, usePolling } from "@/lib/hooks";
-import { loadDomestic, loadLocal, loadTop, loadWorld } from "@/lib/rss";
+import { loadDomestic, loadTop, loadWorld } from "@/lib/rss";
 
 const NEWS_INTERVAL = 2 * 60 * 1000;
-const LOCAL_INTERVAL = 5 * 60 * 1000;
-
 
 export default function Home() {
   const place = usePlace();
   const domestic = usePolling(loadDomestic, NEWS_INTERVAL);
   const world = usePolling(loadWorld, NEWS_INTERVAL);
   const top = usePolling(loadTop, NEWS_INTERVAL);
-
-  const localLoader = useCallback(() => loadLocal(place.pref, place.city), [place.pref, place.city]);
-  const local = usePolling(place.status === "locating" || !(place.pref || place.city) ? null : localLoader, LOCAL_INTERVAL);
 
   const tickerItems = useMemo(
     () =>
@@ -34,8 +29,6 @@ export default function Home() {
       ),
     [top.data, domestic.data, world.data],
   );
-
-  const areaName = place.city || place.pref || "現在地";
 
   // ---- 速報通知 ----
   const [alertSettings, updateAlertSettings] = useAlertSettings();
@@ -49,7 +42,6 @@ export default function Home() {
       { category: "主要", items: top.data?.data, all: true },
       { category: "国内", items: domestic.data?.data },
       { category: "国際", items: world.data?.data },
-      { category: areaName, items: local.data?.data },
     ],
     pushAlerts,
   );
@@ -99,12 +91,11 @@ export default function Home() {
           <WeatherPanel place={place} />
         </div>
         <div className="col col-mid">
-          <NewsPanel title="国内ニュース" sub="Yahoo!ニュース" feed={domestic} className="grow-3" />
-          <NewsPanel title={`${areaName} 周辺ニュース`} sub={`Yahoo!ニュース / Google News・${place.pref || "周辺"}`} feed={local} className="grow-2" />
+          <LivePanel />
         </div>
         <div className="col col-right">
-          <MarketPanel />
-          <NewsPanel title="国際ニュース" sub="Yahoo!ニュース" feed={world} className="grow-3" />
+          <NewsPanel title="国内ニュース" sub="Yahoo!ニュース" feed={domestic} className="grow-1" />
+          <NewsPanel title="国際ニュース" sub="Yahoo!ニュース" feed={world} className="grow-1" />
         </div>
       </main>
 

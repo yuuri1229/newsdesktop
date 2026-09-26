@@ -1,5 +1,4 @@
 import { fetchViaProxy } from "./fetcher";
-import prefectures from "./prefectures.json";
 import { snapshotOr, type Snap } from "./snapshot";
 
 export type NewsItem = {
@@ -67,7 +66,6 @@ export async function fetchFeeds(sources: FeedSource[], limit = 40): Promise<New
     .slice(0, limit);
 }
 
-const gnews = (path: string) => `https://news.google.com/rss/${path}hl=ja&gl=JP&ceid=JP:ja`;
 const yahoo = (path: string) => `https://news.yahoo.co.jp/rss/${path}.xml`;
 const YAHOO = "Yahoo!ニュース";
 
@@ -82,13 +80,6 @@ export const FEEDS = {
     { name: YAHOO, url: yahoo("topics/world") },
     { name: YAHOO, url: yahoo("categories/world") },
   ],
-  local: (pref: string, city: string): FeedSource[] => {
-    const q = (s: string) => gnews(`search?q=${encodeURIComponent(`${s} when:1d`)}&`);
-    const list: FeedSource[] = [];
-    if (city) list.push({ name: "Google News", url: q(city) });
-    if (pref && pref !== city) list.push({ name: "Google News", url: q(pref) });
-    return list;
-  },
 };
 
 const reviveNews = (items: NewsItem[]) =>
@@ -102,28 +93,3 @@ export const loadTop = (): Promise<Snap<NewsItem[]>> =>
 
 export const loadWorld = (): Promise<Snap<NewsItem[]>> =>
   snapshotOr("news-world.json", () => fetchFeeds(FEEDS.world), reviveNews);
-
-/** 都道府県のスナップショット + (取れれば) 市区町村名での直接検索を合わせる */
-export async function loadLocal(pref: string, city: string): Promise<Snap<NewsItem[]>> {
-  const code = prefectures.find((p) => p.name === pref)?.code;
-  const [prefSnap, cityItems] = await Promise.allSettled([
-    code
-      ? snapshotOr(`local/${code}.json`, () => fetchFeeds(FEEDS.local(pref, "")), reviveNews)
-      : Promise.reject(new Error("unknown prefecture")),
-    city ? fetchFeeds(FEEDS.local("", city), 20) : Promise.reject(new Error("no city")),
-  ]);
-  const cityList = cityItems.status === "fulfilled" ? cityItems.value : [];
-  if (prefSnap.status === "rejected" && !cityList.length) throw prefSnap.reason;
-  const base = prefSnap.status === "fulfilled" ? prefSnap.value : { data: [], asOf: new Date() };
-  const seen = new Set<string>();
-  const data = [...cityList, ...base.data]
-    .filter((it) => {
-      const k = it.title.replace(/\s+/g, "");
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    })
-    .sort((a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0))
-    .slice(0, 40);
-  return { data, asOf: base.asOf };
-}
