@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Icon } from "./Icon";
 import { audioReady, playChime, unlockAudio, type Alert, type AlertSettings } from "@/lib/alerts";
 
 const hm = (d: Date | null) =>
@@ -22,7 +23,7 @@ export function AlertPopups({ alerts, onDismiss }: { alerts: Alert[]; onDismiss:
               {a.category} ・ {hm(a.date)} ・ {a.source}
             </span>
             <button className="alert-close" onClick={() => onDismiss(a.id)} aria-label="閉じる">
-              ×
+              <Icon name="close" size={18} />
             </button>
           </header>
           <a className="alert-title" href={a.link} target="_blank" rel="noreferrer">
@@ -107,7 +108,8 @@ export function AlertControl({
         }}
         aria-expanded={open}
       >
-        {enabled ? "🔔" : "🔕"} 速報通知 {enabled ? "ON" : "OFF"}
+        <Icon name={enabled ? "notifications_active" : "notifications_off"} size={16} />
+        速報通知 {enabled ? "ON" : "OFF"}
         {needsClick && <span className="alert-hint">（クリックで音を有効化）</span>}
       </button>
       {open && (
@@ -144,7 +146,8 @@ export function AlertControl({
           {perm === "denied" && <p className="alert-note">ブラウザで通知がブロックされています</p>}
           <p className="alert-note">対象: Yahoo!ニュース主要トピックスの新着と、「速報」を含む見出し</p>
           <button className="alert-test" onClick={onTest}>
-            ▶ テスト通知
+            <Icon name="play_arrow" size={16} />
+            テスト通知
           </button>
         </div>
       )}

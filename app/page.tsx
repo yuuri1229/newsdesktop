@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AlertControl, AlertPopups, notify } from "@/components/BreakingAlerts";
 import { unlockAudio, useAlertSettings, useBreakingDetector, type Alert } from "@/lib/alerts";
 import { Clock } from "@/components/Clock";
+import { Icon } from "@/components/Icon";
 import { MarketPanel } from "@/components/MarketPanel";
 import { NewsPanel } from "@/components/NewsPanel";
 import { Ticker } from "@/components/Ticker";
@@ -77,7 +78,8 @@ export default function Home() {
           <span className="dot" /> LIVE
         </span>
         <span className="topbar-loc">
-          📍 {[place.pref, place.city].filter(Boolean).join(" ")}
+          <Icon name="location_on" size={16} className={place.status === "gps" ? "loc-on" : ""} />
+          {[place.pref, place.city].filter(Boolean).join(" ")}
           {place.status === "locating" && " 位置情報を取得中…"}
         </span>
         <AlertControl settings={alertSettings} update={updateAlertSettings} onTest={testAlert} />

@@ -75,7 +75,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--down); letter-spacing: 0.1em; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--down); animation: pulse 1.6s infinite; }
 @keyframes pulse { 50% { opacity: 0.25; } }
-.topbar-loc { color: var(--ink-2); font-size: 13px; margin-left: auto; }
+.icon { flex: none; display: inline-block; vertical-align: middle; }
+.topbar-loc { color: var(--ink-2); font-size: 13px; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+.topbar-loc .icon { color: var(--muted); }
+.topbar-loc .icon.loc-on { color: var(--accent); }
 .fs-btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; }
 
 .grid {
@@ -236,11 +239,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---- 速報通知 ---- */
 .alert-ctl { position: relative; }
-.alert-btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+.alert-btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px 3px 8px; font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.alert-btn.on .icon { color: #d4a017; }
 .alert-btn.on { color: var(--ink); }
 .alert-hint { color: #d4a017; margin-left: 4px; }
 .alert-menu {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 280px;
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; width: 280px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; gap: 8px; font-size: 13px;
 }
@@ -248,7 +252,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .alert-menu .vol { padding-left: 24px; color: var(--ink-2); font-size: 12px; }
 .alert-menu .vol input { flex: 1; }
 .alert-note { margin: 0; font-size: 11px; color: var(--muted); }
-.alert-test { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; }
+.alert-test { display: inline-flex; align-items: center; gap: 2px; align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; }
 
 .alerts { position: fixed; top: 52px; right: 16px; z-index: 40; width: min(460px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; }
 .alert {
@@ -260,7 +264,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .alert-kind { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: #fff; background: var(--accent); border-radius: 3px; padding: 1px 6px; }
 .alert-breaking .alert-kind { background: var(--new); animation: pulse 1.2s 3; }
 .alert-meta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.alert-close { margin-left: auto; background: none; border: 0; font-size: 18px; line-height: 1; color: var(--muted); padding: 0 2px; }
+.alert-close { margin-left: auto; background: none; border: 0; line-height: 0; color: var(--muted); padding: 2px; border-radius: 4px; }
+.alert-close:hover { color: var(--ink); background: var(--panel-2); }
 .alert-title { display: block; font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
 .alert-timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--new); opacity: 0.6; transform-origin: left; animation: alert-timer linear forwards; }
 .alert:not(.alert-breaking) .alert-timer { background: var(--accent); }
