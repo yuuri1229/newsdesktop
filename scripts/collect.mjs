@@ -103,10 +103,59 @@ async function stooq(symbol, name) {
   };
 }
 
+const toNum = (v) => (v == null ? NaN : Number(String(v).replace(/,/g, "")));
+
+// 1 回の取得で現在値しか取れないソースは、前回ファイルの当日分の点に追記してチャートを作る
+let previousMarket = [];
+try {
+  previousMarket = JSON.parse(await readFile(path.join(OUT, "market.json"), "utf8")).data ?? [];
+} catch {}
+const jstDate = (t) => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
+function withHistory(name, price) {
+  const now = Date.now();
+  const prev = previousMarket.find((q) => q.name === name)?.points ?? [];
+  const today = prev.filter((p) => jstDate(p.t) === jstDate(now));
+  return [...today, { t: now, v: price }].slice(-120);
+}
+
+async function googleFinance(ticker, name) {
+  const html = await get(`https://www.google.com/finance/quote/${ticker}?hl=en`);
+  const price = toNum(html.match(/data-last-price="([\d.,]+)"/)?.[1]);
+  if (isNaN(price)) throw new Error(`google: no price ${ticker}`);
+  const prevClose = toNum(html.match(/Previous close<\/div>[\s\S]{0,400}?>([\d,]+\.\d+)</)?.[1]);
+  const ts = Number(html.match(/data-last-normal-market-timestamp="(\d+)"/)?.[1]);
+  return {
+    name,
+    price,
+    prevClose: isNaN(prevClose) ? null : prevClose,
+    time: ts ? new Date(ts * 1000).toISOString() : new Date().toISOString(),
+    points: withHistory(name, price),
+    source: "Google Finance",
+  };
+}
+
+async function yahooJapan(code, name) {
+  const html = await get(`https://finance.yahoo.co.jp/quote/${code}`);
+  const board = html.match(/"mainIndicatorPriceBoard"\s*:\s*\{[\s\S]{0,2000}?\}/)?.[0] ?? html;
+  const price = toNum(board.match(/"price"\s*:\s*"([\d,.]+)"/)?.[1]);
+  if (isNaN(price)) throw new Error(`yahoo.co.jp: no price ${code}`);
+  const change = toNum(board.match(/"changePrice"\s*:\s*"([+\-\d,.]+)"/)?.[1]);
+  return {
+    name,
+    price,
+    prevClose: isNaN(change) ? null : Math.round((price - change) * 100) / 100,
+    time: new Date().toISOString(),
+    points: withHistory(name, price),
+    source: "Yahoo!ファイナンス",
+  };
+}
+
 async function firstOk(name, tasks) {
   for (const t of tasks) {
     try {
-      return await t();
+      const q = await t();
+      console.log(`${name}: ${q.price} (${q.source})`);
+      return q;
     } catch (e) {
       console.warn(`${name}:`, e.message);
     }
@@ -159,7 +208,12 @@ await Promise.all([
   save("market.json", async () => {
     const results = await Promise.allSettled([
       firstOk("N225", [() => yahoo("^N225", "日経平均株価"), () => stooq("^nkx", "日経平均株価")]),
-      firstOk("TOPIX", [() => yahoo("^TOPX", "TOPIX"), () => yahoo("998405.T", "TOPIX"), () => stooq("^tpx", "TOPIX")]),
+      firstOk("TOPIX", [
+        () => googleFinance("TOPIX:INDEXTOPIX", "TOPIX"),
+        () => yahooJapan("998405.T", "TOPIX"),
+        () => yahoo("^TOPX", "TOPIX"),
+        () => stooq("^tpx", "TOPIX"),
+      ]),
     ]);
     if (results.every((r) => r.status === "rejected")) throw new Error("market failed");
     return results.map((r, i) =>
