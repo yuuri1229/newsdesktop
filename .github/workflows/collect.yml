@@ -1,0 +1,43 @@
+name: Collect data
+
+# ブラウザから直接取得できない (CORS 非対応の) ニュース RSS と株価を定期取得し、
+# `data` ブランチに JSON として保存する。ダッシュボードは raw.githubusercontent.com から読む。
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main, claude/personal-data-realtime-app-cvzdof]
+    paths: [scripts/collect.mjs, lib/prefectures.json, .github/workflows/collect.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore previous data
+        run: |
+          git fetch --depth=1 origin data && git worktree add data-out FETCH_HEAD || mkdir -p data-out
+      - name: Fetch feeds and quotes
+        run: node scripts/collect.mjs data-out
+      - name: Publish to data branch
+        working-directory: data-out
+        run: |
+          rm -rf .git
+          git init -q -b data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "data $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data

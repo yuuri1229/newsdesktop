@@ -2,6 +2,7 @@
 
 import type { Polled } from "@/lib/hooks";
 import type { NewsItem } from "@/lib/rss";
+import type { Snap } from "@/lib/snapshot";
 import { Empty, Panel } from "./Panel";
 
 const NEW_MS = 60 * 60 * 1000;
@@ -24,7 +25,7 @@ export function NewsPanel({
 }: {
   title: string;
   sub?: React.ReactNode;
-  feed: Polled<NewsItem[]>;
+  feed: Polled<Snap<NewsItem[]>>;
   className?: string;
 }) {
   const now = Date.now();
@@ -33,16 +34,17 @@ export function NewsPanel({
       title={title}
       sub={sub}
       updatedAt={feed.updatedAt}
+      asOf={feed.data?.asOf}
       error={feed.error}
       loading={feed.loading}
       onRefresh={feed.refresh}
       className={`news ${className ?? ""}`}
     >
-      {!feed.data?.length ? (
+      {!feed.data?.data.length ? (
         <Empty error={feed.error} loading={feed.loading} />
       ) : (
         <ol className="news-list">
-          {feed.data.map((it) => {
+          {feed.data.data.map((it) => {
             const fresh = it.date && now - it.date.getTime() < NEW_MS;
             return (
               <li key={it.link || it.title}>

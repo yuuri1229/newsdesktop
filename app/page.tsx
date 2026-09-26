@@ -7,25 +7,23 @@ import { NewsPanel } from "@/components/NewsPanel";
 import { Ticker } from "@/components/Ticker";
 import { WeatherPanel } from "@/components/WeatherPanel";
 import { usePlace, usePolling } from "@/lib/hooks";
-import { FEEDS, fetchFeeds } from "@/lib/rss";
+import { loadDomestic, loadLocal, loadWorld } from "@/lib/rss";
 
 const NEWS_INTERVAL = 2 * 60 * 1000;
 const LOCAL_INTERVAL = 5 * 60 * 1000;
 
-const loadDomestic = () => fetchFeeds(FEEDS.domestic);
-const loadWorld = () => fetchFeeds(FEEDS.world);
 
 export default function Home() {
   const place = usePlace();
   const domestic = usePolling(loadDomestic, NEWS_INTERVAL);
   const world = usePolling(loadWorld, NEWS_INTERVAL);
 
-  const loadLocal = useCallback(() => fetchFeeds(FEEDS.local(place.pref, place.city)), [place.pref, place.city]);
-  const local = usePolling(place.status === "locating" || !(place.pref || place.city) ? null : loadLocal, LOCAL_INTERVAL);
+  const localLoader = useCallback(() => loadLocal(place.pref, place.city), [place.pref, place.city]);
+  const local = usePolling(place.status === "locating" || !(place.pref || place.city) ? null : localLoader, LOCAL_INTERVAL);
 
   const tickerItems = useMemo(
     () =>
-      [...(domestic.data ?? []), ...(world.data ?? [])].sort(
+      [...(domestic.data?.data ?? []), ...(world.data?.data ?? [])].sort(
         (a, b) => (b.date?.getTime() ?? 0) - (a.date?.getTime() ?? 0),
       ),
     [domestic.data, world.data],
@@ -63,7 +61,7 @@ export default function Home() {
         </div>
         <div className="col col-mid">
           <NewsPanel title="国内ニュース" sub="NHK / Google News" feed={domestic} className="grow-3" />
-          <NewsPanel title={`${areaName} 周辺ニュース`} sub="Google News（24時間以内）" feed={local} className="grow-2" />
+          <NewsPanel title={`${areaName} 周辺ニュース`} sub={`Google News・${place.pref || "周辺"}（24時間以内）`} feed={local} className="grow-2" />
         </div>
         <div className="col col-right">
           <MarketPanel />

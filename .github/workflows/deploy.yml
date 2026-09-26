@@ -30,6 +30,8 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
           # 独自の CORS プロキシを使う場合はリポジトリ変数 CORS_PROXY を設定
           NEXT_PUBLIC_CORS_PROXY: ${{ vars.CORS_PROXY }}
+          # collect.yml が保存するデータの取得元
+          NEXT_PUBLIC_DATA_BASE: https://raw.githubusercontent.com/${{ github.repository }}/data
       - run: touch out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

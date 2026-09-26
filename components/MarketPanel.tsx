@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useNow, usePolling } from "@/lib/hooks";
-import { fetchMarkets, tseSession, type Quote } from "@/lib/market";
+import { loadMarkets, tseSession, type Quote } from "@/lib/market";
 import { Empty, Panel } from "./Panel";
 
 const num = (v: number, d = 2) => v.toLocaleString("ja-JP", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -57,7 +57,7 @@ function Sparkline({ q, up }: { q: Quote; up: boolean }) {
 }
 
 export function MarketPanel() {
-  const feed = usePolling(fetchMarkets, 60 * 1000);
+  const feed = usePolling(loadMarkets, 60 * 1000);
   const now = useNow(30_000);
   const session = now ? tseSession(now) : null;
 
@@ -66,6 +66,7 @@ export function MarketPanel() {
       title="マーケット"
       sub={session && <span className={`session ${session.open ? "open" : ""}`}>● 東証 {session.label}</span>}
       updatedAt={feed.updatedAt}
+      asOf={feed.data?.asOf}
       error={feed.error}
       loading={feed.loading}
       onRefresh={feed.refresh}
@@ -75,7 +76,7 @@ export function MarketPanel() {
         <Empty error={feed.error} loading={feed.loading} />
       ) : (
         <div className="quotes">
-          {feed.data.map((q) => {
+          {feed.data.data.map((q) => {
             const ok = !isNaN(q.price);
             const chg = ok && q.prevClose != null ? q.price - q.prevClose : null;
             const pct = chg != null && q.prevClose ? (chg / q.prevClose) * 100 : null;

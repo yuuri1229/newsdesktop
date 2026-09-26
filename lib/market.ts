@@ -1,4 +1,5 @@
 import { fetchViaProxy } from "./fetcher";
+import { snapshotOr, type Snap } from "./snapshot";
 
 export type Quote = {
   name: string;
@@ -84,6 +85,15 @@ export async function fetchMarkets(): Promise<Quote[]> {
       : { name: i === 0 ? "日経平均株価" : "TOPIX", price: NaN, prevClose: null, time: null, points: [], source: "取得失敗" },
   );
 }
+
+export const loadMarkets = (): Promise<Snap<Quote[]>> =>
+  snapshotOr("market.json", fetchMarkets, (qs) =>
+    qs.map((q) => ({
+      ...q,
+      price: q.price ?? NaN,
+      time: q.time ? new Date(q.time as unknown as string) : null,
+    })),
+  );
 
 /** 東証の立会状況 (前場 9:00-11:30 / 後場 12:30-15:30、土日) */
 export function tseSession(now: Date): { label: string; open: boolean } {

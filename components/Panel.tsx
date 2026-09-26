@@ -7,6 +7,7 @@ export function Panel({
   title,
   sub,
   updatedAt,
+  asOf,
   error,
   loading,
   onRefresh,
@@ -16,6 +17,8 @@ export function Panel({
   title: string;
   sub?: ReactNode;
   updatedAt?: Date | null;
+  /** データ自体の時刻 (取得時刻と異なる場合) */
+  asOf?: Date | null;
   error?: string | null;
   loading?: boolean;
   onRefresh?: () => void;
@@ -29,7 +32,11 @@ export function Panel({
         {sub && <span className="panel-sub">{sub}</span>}
         <span className="panel-status">
           {error && <span className="err" title={error}>⚠ 取得失敗</span>}
-          {updatedAt && <span>{hhmm(updatedAt)} 更新</span>}
+          {asOf ? (
+            <span title={updatedAt ? `最終確認 ${hhmm(updatedAt)}` : undefined}>{hhmm(asOf)} 時点</span>
+          ) : (
+            updatedAt && <span>{hhmm(updatedAt)} 更新</span>
+          )}
           {onRefresh && (
             <button className={`refresh ${loading ? "spin" : ""}`} onClick={onRefresh} aria-label={`${title}を更新`}>
               ↻
