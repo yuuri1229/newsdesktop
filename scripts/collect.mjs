@@ -209,6 +209,8 @@ await Promise.all([
       { name: YAHOO, url: yahoo_("topics/business") },
     ]),
   ),
+  // 主要トピックス (速報通知・テロップ用)
+  save("news-top.json", () => feeds([{ name: YAHOO, url: yahoo_("topics/top-picks") }], 20)),
   save("news-world.json", () =>
     feeds([
       { name: YAHOO, url: yahoo_("topics/world") },

@@ -77,6 +77,7 @@ export const FEEDS = {
     { name: YAHOO, url: yahoo("categories/domestic") },
     { name: YAHOO, url: yahoo("topics/business") },
   ],
+  top: [{ name: YAHOO, url: yahoo("topics/top-picks") }],
   world: [
     { name: YAHOO, url: yahoo("topics/world") },
     { name: YAHOO, url: yahoo("categories/world") },
@@ -95,6 +96,9 @@ const reviveNews = (items: NewsItem[]) =>
 
 export const loadDomestic = (): Promise<Snap<NewsItem[]>> =>
   snapshotOr("news-domestic.json", () => fetchFeeds(FEEDS.domestic), reviveNews);
+
+export const loadTop = (): Promise<Snap<NewsItem[]>> =>
+  snapshotOr("news-top.json", () => fetchFeeds(FEEDS.top, 20), reviveNews);
 
 export const loadWorld = (): Promise<Snap<NewsItem[]>> =>
   snapshotOr("news-world.json", () => fetchFeeds(FEEDS.world), reviveNews);

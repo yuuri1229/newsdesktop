@@ -234,6 +234,42 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .ticker-move { animation: none; } }
 
+/* ---- 速報通知 ---- */
+.alert-ctl { position: relative; }
+.alert-btn { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+.alert-btn.on { color: var(--ink); }
+.alert-hint { color: #d4a017; margin-left: 4px; }
+.alert-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; width: 280px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; gap: 8px; font-size: 13px;
+}
+.alert-menu label { display: flex; align-items: center; gap: 8px; }
+.alert-menu .vol { padding-left: 24px; color: var(--ink-2); font-size: 12px; }
+.alert-menu .vol input { flex: 1; }
+.alert-note { margin: 0; font-size: 11px; color: var(--muted); }
+.alert-test { align-self: flex-start; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font-size: 12px; }
+
+.alerts { position: fixed; top: 52px; right: 16px; z-index: 40; width: min(460px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; }
+.alert {
+  position: relative; overflow: hidden; background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--accent);
+  border-radius: 8px; padding: 10px 12px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); animation: alert-in 0.35s ease-out;
+}
+.alert-breaking { border-left-color: var(--new); }
+.alert header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.alert-kind { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: #fff; background: var(--accent); border-radius: 3px; padding: 1px 6px; }
+.alert-breaking .alert-kind { background: var(--new); animation: pulse 1.2s 3; }
+.alert-meta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alert-close { margin-left: auto; background: none; border: 0; font-size: 18px; line-height: 1; color: var(--muted); padding: 0 2px; }
+.alert-title { display: block; font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); }
+.alert-timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--new); opacity: 0.6; transform-origin: left; animation: alert-timer linear forwards; }
+.alert:not(.alert-breaking) .alert-timer { background: var(--accent); }
+.alert:hover .alert-timer { animation-play-state: paused; }
+.alert-more { align-self: flex-end; font-size: 11px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1px 8px; }
+@keyframes alert-in { from { transform: translateX(30px); opacity: 0; } }
+@keyframes alert-timer { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .alert { animation: none; } }
+
 /* ---- 狭い画面 (タブレット/スマホ) はスクロール許可 ---- */
 @media (max-width: 1100px) {
   .app { height: auto; min-height: 100vh; overflow: visible; }
