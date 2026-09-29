@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AlertControl, AlertPopups, notify } from "@/components/BreakingAlerts";
 import { unlockAudio, useAlertSettings, useBreakingDetector, type Alert } from "@/lib/alerts";
@@ -11,6 +12,7 @@ import { Ticker } from "@/components/Ticker";
 import { WeatherPanel } from "@/components/WeatherPanel";
 import { usePlace, usePolling } from "@/lib/hooks";
 import { loadDomestic, loadTop, loadWorld } from "@/lib/rss";
+import { fmtValue, useLatestSpeed } from "@/lib/speedtest";
 
 const NEWS_INTERVAL = 2 * 60 * 1000;
 
@@ -19,6 +21,7 @@ export default function Home() {
   const domestic = usePolling(loadDomestic, NEWS_INTERVAL);
   const world = usePolling(loadWorld, NEWS_INTERVAL);
   const top = usePolling(loadTop, NEWS_INTERVAL);
+  const speed = useLatestSpeed();
 
   const tickerItems = useMemo(
     () =>
@@ -74,6 +77,10 @@ export default function Home() {
           {[place.pref, place.city].filter(Boolean).join(" ")}
           {place.status === "locating" && " 位置情報を取得中…"}
         </span>
+        <Link href="/speedtest/" className="nav-btn" title="回線スピードテストのページを開く">
+          <Icon name="speed" size={16} /> スピードテスト
+          {speed?.down != null && <span className="nav-btn-val">↓{fmtValue(speed.down, "Mbps")} Mbps</span>}
+        </Link>
         <AlertControl settings={alertSettings} update={updateAlertSettings} onTest={testAlert} />
         <button
           className="fs-btn"
