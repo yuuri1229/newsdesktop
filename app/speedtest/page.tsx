@@ -758,7 +758,7 @@ function HistoryPanel({ all, onClear }: { all: SpeedRecord[]; onClear: () => voi
             )}
           </div>
         ) : (
-          <p className="st-empty">この期間の計測データはありません</p>
+          <p className="st-empty">計測データはまだありません</p>
         )}
       </div>
     </section>
