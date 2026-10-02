@@ -24,6 +24,10 @@ import {
   metricValue,
   overallScore,
   readSettings,
+  RESULTS_API,
+  fetchSharedResults,
+  submitResult,
+  userId,
   scoreGrade,
   stability,
   startSpeedTest,
@@ -35,6 +39,7 @@ import {
   type LiveProgress,
   type MetricKey,
   type RunningTest,
+  type SharedResult,
   type SpeedRecord,
   type TestMode,
 } from "@/lib/speedtest";
@@ -75,6 +80,7 @@ export default function SpeedTestPage() {
   const [message, setMessage] = useState<string | null>(null);
   const testRef = useRef<RunningTest | null>(null);
   const busy = useRef(false);
+  const [sharedKey, setSharedKey] = useState(0);
 
   // ---- 1 回分の計測 ----
   const run = useCallback(
@@ -93,7 +99,7 @@ export default function SpeedTestPage() {
         try {
           const res = await test.promise;
           const meta = await fetchMeta();
-          addRecord({
+          const rec: SpeedRecord = {
             t,
             trigger,
             mode,
@@ -106,7 +112,9 @@ export default function SpeedTestPage() {
             bytes: res.bytes,
             dur: res.durationMs,
             ...meta,
-          });
+          };
+          addRecord(rec);
+          submitResult(rec).then(() => setSharedKey((k) => k + 1));
         } catch (e) {
           if (e instanceof DOMException && e.name === "AbortError") {
             setMessage("計測を中止しました");
@@ -227,6 +235,8 @@ export default function SpeedTestPage() {
         <HourlyPanel records={ok} />
         <HistoryPanel records={inRange} onClear={clearHistory} all={history} />
 
+        <AllUsersPanel refreshKey={sharedKey} />
+
         <footer className="st-notes">
           <p>
             ・自動測定はこのページを開いている間だけ動きます（別のタブに切り替えたり最小化していても計測します）。PC のスリープ中は止まり、復帰したときに予定時刻を過ぎていればすぐに計測します。
@@ -235,7 +245,9 @@ export default function SpeedTestPage() {
           <p>
             ・評価は目安です。下り・上り・Ping・ジッター・負荷時の遅延増加をそれぞれ 0〜100 点に換算し、重み（下り 30%・上り 20%・Ping 20%・ジッター 15%・遅延増加 15%）を付けて平均しています。
           </p>
-          <p>・結果はこのブラウザ（localStorage）にのみ保存され、外部には送信しません。</p>
+          <p>
+            ・履歴はこのブラウザ（localStorage）に保存されます。{RESULTS_API ? "計測が成功すると、速度値・接続先・ISP 名・匿名 ID（IP アドレスは含みません）を共有サーバーに送信し、下の「全ユーザーの計測結果」に公開されます。" : "外部には送信しません。"}
+          </p>
         </footer>
       </main>
     </div>
@@ -749,6 +761,101 @@ function HistoryPanel({ records, all, onClear }: { records: SpeedRecord[]; all: 
           </div>
         ) : (
           <p className="st-empty">この期間の計測データはありません</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ---- 全ユーザーの結果 ----
+
+function AllUsersPanel({ refreshKey }: { refreshKey: number }) {
+  const [rows, setRows] = useState<SharedResult[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [limit, setLimit] = useState(50);
+  const [me, setMe] = useState("");
+
+  useEffect(() => setMe(userId()), []);
+  useEffect(() => {
+    if (!RESULTS_API) return;
+    let alive = true;
+    fetchSharedResults()
+      .then((r) => alive && (setRows(r), setError(null)))
+      .catch((e) => alive && setError(e instanceof Error ? e.message : String(e)));
+    return () => {
+      alive = false;
+    };
+  }, [refreshKey]);
+
+  const users = useMemo(() => new Set(rows?.map((r) => r.uid)).size, [rows]);
+  return (
+    <section className="panel st-history">
+      <header className="panel-head">
+        <h2>全ユーザーの計測結果</h2>
+        <span className="panel-sub">{rows ? `${rows.length} 件・${users} ユーザー（新しい順）` : "共有サーバーの結果"}</span>
+      </header>
+      <div className="panel-body">
+        {!RESULTS_API ? (
+          <p className="st-empty">共有サーバーが未設定です（NEXT_PUBLIC_SPEEDTEST_API）。設定方法は README を参照してください。</p>
+        ) : error ? (
+          <p className="st-empty">結果を取得できませんでした（{error}）</p>
+        ) : !rows ? (
+          <p className="st-empty">読み込み中…</p>
+        ) : !rows.length ? (
+          <p className="st-empty">まだ共有された計測結果がありません</p>
+        ) : (
+          <div className="st-scroll">
+            <table className="st-table st-log">
+              <thead>
+                <tr>
+                  <th>日時</th>
+                  <th>ユーザー</th>
+                  <th>下り</th>
+                  <th>上り</th>
+                  <th>Ping</th>
+                  <th>ジッター</th>
+                  <th>遅延増加</th>
+                  <th>評価</th>
+                  <th>モード</th>
+                  <th>データ量</th>
+                  <th>接続先</th>
+                  <th>ISP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.slice(0, limit).map((r) => {
+                  const score = overallScore(r);
+                  return (
+                    <tr key={`${r.uid}-${r.t}`}>
+                      <th>
+                        {fmtTime(r.t)}
+                        <small>{r.trigger === "auto" ? "自動" : "手動"}</small>
+                      </th>
+                      <td>
+                        #{r.uid.slice(0, 6)}
+                        {r.uid === me && <small> (あなた)</small>}
+                      </td>
+                      <td>{fmtValue(r.down, "Mbps")}</td>
+                      <td>{fmtValue(r.up, "Mbps")}</td>
+                      <td>{fmtValue(r.ping, "ms")}</td>
+                      <td>{fmtValue(r.jitter, "ms")}</td>
+                      <td>{fmtValue(metricValue(r, "bloat"), "ms")}</td>
+                      <td>{score === null ? "—" : <><GradeChip grade={scoreGrade(score)} label={false} /> {Math.round(score)}</>}</td>
+                      <td>{MODE_LABELS[r.mode]?.name ?? "—"}</td>
+                      <td>{fmtBytes(r.bytes)}</td>
+                      <td className="muted">{r.colo ?? "—"}</td>
+                      <td className="muted">{r.isp ?? "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {rows.length > limit && (
+              <button className="btn small more" onClick={() => setLimit((l) => l + 50)}>
+                さらに表示（残り {rows.length - limit} 件）
+              </button>
+            )}
+          </div>
         )}
       </div>
     </section>

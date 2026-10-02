@@ -186,6 +186,46 @@ export async function fetchMeta(): Promise<{ colo?: string; isp?: string }> {
   }
 }
 
+// ---- 全ユーザーの結果 (共有 API) ----
+
+/** proxy/speedtest-results-worker.js をデプロイした URL。未設定なら共有しない。 */
+export const RESULTS_API = (process.env.NEXT_PUBLIC_SPEEDTEST_API || "").replace(/\/$/, "");
+
+export type SharedResult = SpeedRecord & { uid: string };
+
+const UID_KEY = "newsdesktop:speedtest:uid";
+export function userId(): string {
+  try {
+    let id = localStorage.getItem(UID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(UID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "anonymous";
+  }
+}
+
+/** 計測結果を共有 API に送る。失敗しても計測自体には影響させない。 */
+export async function submitResult(r: SpeedRecord): Promise<void> {
+  if (!RESULTS_API || r.error) return;
+  try {
+    const { error: _error, ...rest } = r;
+    await fetch(RESULTS_API, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...rest, uid: userId() }),
+    });
+  } catch {}
+}
+
+export async function fetchSharedResults(limit = 200): Promise<SharedResult[]> {
+  const res = await fetch(`${RESULTS_API}?limit=${limit}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return ((await res.json()) as { results: SharedResult[] }).results;
+}
+
 // ---- 評価 ----
 
 export type MetricKey = "down" | "up" | "ping" | "jitter" | "bloat";
