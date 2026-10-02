@@ -233,7 +233,7 @@ export default function SpeedTestPage() {
         <PeriodPanel records={ok} all={inRange} latest={latest} />
         <ChartsGrid records={ok} from={from} to={to} />
         <HourlyPanel records={ok} />
-        <HistoryPanel records={inRange} onClear={clearHistory} all={history} />
+        <HistoryPanel all={history} onClear={clearHistory} />
 
         <AllUsersPanel refreshKey={sharedKey} />
 
@@ -681,9 +681,9 @@ function HourlyPanel({ records }: { records: SpeedRecord[] }) {
 
 // ---- 履歴 ----
 
-function HistoryPanel({ records, all, onClear }: { records: SpeedRecord[]; all: SpeedRecord[]; onClear: () => void }) {
+function HistoryPanel({ all, onClear }: { all: SpeedRecord[]; onClear: () => void }) {
   const [limit, setLimit] = useState(20);
-  const rows = useMemo(() => [...records].reverse(), [records]);
+  const rows = useMemo(() => [...all].reverse(), [all]);
   const download = () => {
     const blob = new Blob([toCsv(all)], { type: "text/csv" });
     const a = document.createElement("a");
@@ -695,8 +695,8 @@ function HistoryPanel({ records, all, onClear }: { records: SpeedRecord[]; all: 
   return (
     <section className="panel st-history">
       <header className="panel-head">
-        <h2>計測履歴</h2>
-        <span className="panel-sub">{records.length} 件</span>
+        <h2>全計測結果の詳細</h2>
+        <span className="panel-sub">{all.length} 件（期間に関わらずすべて）</span>
         <span className="panel-status">
           <button className="btn small" onClick={download} disabled={!all.length}>
             <Icon name="file_download" size={16} /> CSV
@@ -713,14 +713,19 @@ function HistoryPanel({ records, all, onClear }: { records: SpeedRecord[]; all: 
               <thead>
                 <tr>
                   <th>日時</th>
-                  <th>下り</th>
-                  <th>上り</th>
-                  <th>Ping</th>
-                  <th>ジッター</th>
-                  <th>遅延増加</th>
+                  <th>モード</th>
+                  <th>下り<small>Mbps</small></th>
+                  <th>上り<small>Mbps</small></th>
+                  <th>Ping<small>ms</small></th>
+                  <th>ジッター<small>ms</small></th>
+                  <th>下り負荷時<small>ms</small></th>
+                  <th>上り負荷時<small>ms</small></th>
+                  <th>遅延増加<small>ms</small></th>
                   <th>評価</th>
                   <th>データ量</th>
+                  <th>所要</th>
                   <th>接続先</th>
+                  <th>プロバイダー</th>
                 </tr>
               </thead>
               <tbody>
@@ -732,8 +737,9 @@ function HistoryPanel({ records, all, onClear }: { records: SpeedRecord[]; all: 
                         {fmtTime(r.t)}
                         <small>{r.trigger === "auto" ? "自動" : "手動"}</small>
                       </th>
+                      <td className="muted">{MODE_LABELS[r.mode]?.name ?? r.mode}</td>
                       {r.error ? (
-                        <td colSpan={8} className="err">
+                        <td colSpan={12} className="err">
                           計測失敗: {r.error}
                         </td>
                       ) : (
@@ -742,10 +748,14 @@ function HistoryPanel({ records, all, onClear }: { records: SpeedRecord[]; all: 
                           <td>{fmtValue(r.up, "Mbps")}</td>
                           <td>{fmtValue(r.ping, "ms")}</td>
                           <td>{fmtValue(r.jitter, "ms")}</td>
+                          <td>{fmtValue(r.downLoaded, "ms")}</td>
+                          <td>{fmtValue(r.upLoaded, "ms")}</td>
                           <td>{fmtValue(metricValue(r, "bloat"), "ms")}</td>
                           <td>{score === null ? "—" : <><GradeChip grade={scoreGrade(score)} label={false} /> {Math.round(score)}</>}</td>
                           <td>{fmtBytes(r.bytes)}</td>
+                          <td>{(r.dur / 1000).toFixed(1)} 秒</td>
                           <td className="muted">{r.colo ?? "—"}</td>
+                          <td className="muted">{r.isp ?? "—"}</td>
                         </>
                       )}
                     </tr>
